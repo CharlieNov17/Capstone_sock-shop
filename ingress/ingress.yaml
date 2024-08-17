@@ -1,0 +1,63 @@
+# Ingress resource for the application
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sock-shop
+  namespace: sock-shop
+  annotations:
+    cert-manager.io/clusterissuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: www.chibuzonwobia.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: front-end
+            port:
+              number: 80
+# Ingress resource for the grafana
+  - host: grafana.chibuzonwobia.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pros-grafana
+            port:
+              number: 80
+ # Ingress resource for the prometheus
+  - host: prometheus.chibuzonwobia.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-operated
+            port:
+              number: 9090
+
+  - host: alertmanager.chibuzonwobia.me
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: alertmanager-operated
+            port:
+              number: 9093
+
+  # tls:
+  # - hosts:
+  #   - www.chibuzonwobia.me
+  #   # - sockshop-grafana.chibuzonwobia.me
+  #   # - sockshop-prometheus.chibuzonwobia.me
+  #   # - sockshop-alertmanager.chibuzonwobia.me
+  #   secretName: chibuzo-secret

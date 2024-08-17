@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: cert-manager 
+spec:
+  acme:
+    # The ACME server URL for Let's Encrypt staging
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: chibuzo.nwobia@gmail.com   # Replace with your email address
+    
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
