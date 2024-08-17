@@ -71,7 +71,7 @@ jobs:
         run: |
 
           cd ingress
-          kubectl apply -f .
+          kubectl apply -f ingress.yaml
 
       - name: Run Enccryption
         run: |
