@@ -1,125 +1,158 @@
-### Altschool Capstone Project: Deployment of the Socks Shop Microservices Application on Kubernetes
+# Altschool Capstone Project
 
-This project focuses on deploying the Socks Shop application on a Kubernetes cluster using Infrastructure as Code (IaC). The process includes provisioning the necessary infrastructure on AWS with Terraform, setting up a deployment pipeline, monitoring the application’s performance and health, and ensuring security.
+## Deploying the Sock Shop Microservices Application on Kubernetes
 
-**Tools and Technologies Used:**
+This project showcases the deployment of the Sock Shop application on a Kubernetes cluster using an Infrastructure as Code (IaC) approach. It involves provisioning the necessary AWS infrastructure using Terraform, setting up a deployment pipeline, monitoring the application's performance and health, and securing the application.
 
-- **Terraform:** For provisioning infrastructure on AWS.
-- **GitHub Actions:** For automating the deployment pipeline.
-- **Kubernetes:** For container orchestration.
-- **Prometheus and Grafana:** For monitoring and visualization.
-- **Let’s Encrypt:** For securing the application with SSL/TLS certificates.
-- **Helm:** For managing Kubernetes packages.
+Key tools and technologies used include Terraform for infrastructure provisioning, GitHub Actions for the deployment pipeline, Kubernetes for container orchestration, and Prometheus for monitoring.
 
----
+### Project Requirements
+- Terraform
+- AWS account
+- Kubernetes
+- Prometheus and Grafana for monitoring
+- Let's Encrypt for securing the application
+- Helm for package management
 
 ### Prerequisites
-
-- AWS Account
-- Terraform
-- GitHub Actions
-- Kubernetes
-- Prometheus
-- Socks Shop Application
+- An AWS Account
+- Terraform installed locally
+- GitHub Actions configured
+- Kubernetes cluster (EKS)
+- Prometheus for monitoring
+- The Sock Shop application
 
 ### Project Resources
-
-- **Socks Shop Resources:** [GitHub Repository](https://github.com/microservices-demo/microservices-demo.github.io)
+- **Sock Shop Resources:** [Microservices Demo](https://github.com/microservices-demo/microservices-demo.github.io)
 - **Demo:** [Microservices Demo](https://github.com/microservices-demo/microservices-demo/tree/master)
 
-### Project Implementation
+## Project Implementation
 
-#### 1. **Infrastructure Provisioning**
+### 1. Provisioning Infrastructure
+The first step is to provision the necessary infrastructure on AWS, including a VPC, security group, and an EKS cluster. To do this, ensure Terraform is installed, and the AWS CLI is configured.
 
-Start by provisioning the necessary infrastructure on AWS, which includes a VPC, Security Group, and EKS Cluster. This can be done using Terraform. The Terraform configuration is available in the `terraform` branch of this repository.
+- Initialize Terraform:
+  ```bash
+  terraform init
+  ```
 
-**Steps:**
-- Install Terraform and configure the AWS CLI.
-- Write the Terraform code for the infrastructure.
-- Initialize Terraform with `terraform init`.
-- Validate the configuration with `terraform validate`.
-- Check the plan with `terraform plan`.
-- Apply the configuration with `terraform apply --auto-approve`.
+- Check the plan of your infrastructure:
+  ```bash
+  terraform plan
+  ```
 
-This will set up the required infrastructure on AWS.
+- Validate the Terraform code:
+  ```bash
+  terraform validate
+  ```
 
-#### 2. **Kubernetes Configuration**
+- Apply the Terraform configuration to provision the infrastructure:
+  ```bash
+  terraform apply --auto-approve
+  ```
 
-Once the infrastructure is provisioned, connect your `kubectl` to the EKS cluster by updating the kubeconfig:
+![Infrastructure Provision Success](/sockshop/creating%20infrastructure.png)
+
+### 2. Connecting Kubernetes to EKS Cluster
+Once the infrastructure is provisioned, update your `kubeconfig` file to connect `kubectl` to the EKS cluster:
 
 ```bash
 aws eks update-kubeconfig --region us-east-1 --name sock-shop
 ```
+![Kubeconfig Update](/sockshop/kubeconfig.png)
 
-Deploy the application to the EKS cluster using the Kubernetes manifest files available in the `main` branch of this repository:
+### 3. Deploying the Kubernetes Manifest
+Deploy the Kubernetes manifest to the EKS cluster:
 
 ```bash
 kubectl apply -f deployment.yml
 ```
+![Deploying Manifest](/sockshop/namspaces.png)
 
-Verify the deployment with the following commands:
-
-```bash
-kubectl get pods -n sock-shop
-kubectl get svc -n sock-shop
-```
-
-#### 3. **Load Balancing and Ingress**
-
-Since the services are not accessible due to their ClusterIP, install the Ingress controller to create a load balancer:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/aws/deploy.yaml
-```
-
-Next, create and apply an Ingress resource to provide a single point of entry to your cluster:
-
-```bash
-kubectl apply -f ingress.yml -n sock-shop
-```
-
-To make the application accessible, connect the load balancer to a domain name using an A record.
-
-#### 4. **Monitoring**
-
-Prometheus will monitor the performance and health of the Socks Shop application, while Grafana will be used for visualization.
-
-**Steps:**
-- Install Helm and update it.
-- Add the Prometheus Helm repository:
+- Verify that the pods and services are running:
   ```bash
+  kubectl get pods -n sock-shop
+  kubectl get svc -n sock-shop
+  ```
+![Pods and Services](/sockshop/pods.png)
+![Pods and Services](/sockshop/services.png)
+
+### 4. Setting Up Ingress Controller
+Since the services are not accessible externally, you need to set up an Ingress Controller to create a load balancer:
+
+- Apply the Ingress Controller:
+  ```bash
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/aws/deploy.yaml
+  ```
+![Ingress Controller Install](/sockshop/ingress%20controller%20install.png)
+![Load Balancer in UI](/sockshop/load%20balancer.png)
+
+- Apply the Ingress resource:
+  ```bash
+  kubectl apply -f ingress.yml -n sock-shop
+  ```
+
+If the load balancer IP or DNS name doesn’t serve the application, connect it to a domain name with an A record linked to the load balancer's IP address:
+
+```bash
+nslookup <DNS name of the load balancer>
+```
+![Front End of Sock Shop](/sockshop/testpage.png)
+
+## Monitoring
+
+Prometheus is used to monitor the Sock Shop application's performance, including metrics like request latency, error rate, and request volume. Grafana is used to visualize these metrics.
+
+- Install Helm and add the Prometheus repository:
+  ```bash
+  curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+  sudo apt-get install apt-transport-https
+  sudo apt-get update
+  sudo apt-get install helm
+
   helm repo add prometheus https://prometheus-community.github.io/helm-charts
   ```
-- Install the Prometheus stack:
+
+- Search and install the Prometheus chart:
   ```bash
+  helm search repo prometheus
   helm install prometheus prometheus/kube-prometheus-stack -n sock-shop
   ```
-- Update the Ingress configuration to host Prometheus, Grafana, and Alertmanager.
 
-#### 5. **Security with HTTPS**
+- Update the `ingress.yml` file to host Prometheus, Grafana, and Alert Manager, and apply it.
 
-Secure the application using Let’s Encrypt certificates with cert-manager.
+![Prometheus UI](/sockshop/promethus.png))
+![Grafana Page](/sockshop/graphana.png)
+![Alert Manager Page](/sockshop/alerrtmanager.png)
+![Grafana Dashboard](/sockshop/dasboards%20for%20services.png)
 
-**Steps:**
+## Security
+
+Secure the application with HTTPS using a Let's Encrypt certificate.
+
 - Create a namespace for cert-manager:
   ```bash
   kubectl create namespace cert-manager
   ```
-- Install cert-manager:
+
+- Apply the cert-manager YAML file:
   ```bash
   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.2/cert-manager.yaml
   ```
-- Create and apply ClusterIssuer and Certificate YAML files.
-- Update the Ingress resource with TLS settings.
+![Cert-Manager Install](/sockshop/certificate%20manager%20installation.png)
 
-#### 6. **CI/CD Pipeline**
+- Create and apply the ClusterIssuer and Certificate YAML files to issue the SSL certificate. Update the ingress file with the TLS record and annotations.
 
-CI/CD involves continuous integration and deployment of code. GitHub Actions was used to automate this process.
 
-**Steps:**
-- Create two branches: one for infrastructure provisioning and another for application deployment.
-- Set up GitHub Actions to automate the deployment pipeline, ensuring that any code passing tests is deployed to staging or production environments.
+## CI/CD Pipeline
 
----
+CI/CD automates the process of integrating code changes and deploying them to production. This project uses GitHub Actions to automate both infrastructure provisioning and application deployment.
 
-By following these steps, the Socks Shop microservices application will be deployed on Kubernetes using a fully automated, secure, and scalable approach.
+- The CI/CD pipeline is broken into two branches: one for infrastructure provisioning and another for deploying the Kubernetes manifest.
+
+![Terraform Workflow](/sockshop/terafoorm%20cicd.png)
+![Manifest Workflow](/sockshop/manifest%20cicd.png)
+
+## Conclusion
+
+This project demonstrates the deployment of a microservices application using best practices in DevOps. By the end, you'll have experience with infrastructure provisioning using Terraform, Kubernetes orchestration, security with HTTPS, monitoring with Prometheus and Grafana, and automated CI/CD pipelines.
